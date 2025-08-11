@@ -16,9 +16,10 @@ const Navbar = () => {
   const location = useLocation();
   
   const navigation = [
-    { name: "Discover", href: "/discover", icon: MapPin },
+    { name: "Discover", href: "/search", icon: MapPin },
     { name: "My Trips", href: "/trips", icon: Calendar },
     { name: "Community", href: "/community", icon: User },
+    { name: "Profile", href: "/profile", icon: User },
   ];
 
   const isActive = (path: string) => location.pathname === path;
