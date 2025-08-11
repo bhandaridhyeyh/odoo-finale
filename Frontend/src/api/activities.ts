@@ -5,22 +5,32 @@ export interface ActivityPayload {
   description?: string;
   time?: string;
   cost?: number;
+  sectionId?: string;  // add if your frontend uses it
 }
 
 export const ActivitiesAPI = {
   create(stopId: string, payload: ActivityPayload) {
-    return API.post(`/activities/${stopId}`, payload).then(r => r.data);
+    // Create new activity for a stop
+    return API.post(`/stops/${stopId}/activities`, payload).then((r) => r.data);
   },
+
   list(stopId: string) {
-    return API.get(`/activities/${stopId}`).then(r => r.data);
+    // List activities for a stop
+    return API.get(`/stops/${stopId}/activities`).then((r) => r.data);
   },
+
   get(id: string) {
-    return API.get(`/activities/activity/${id}`).then(r => r.data);
+    // Get single activity by ID
+    return API.get(`/activities/${id}`).then((r) => r.data);
   },
+
   update(id: string, payload: Partial<ActivityPayload>) {
-    return API.put(`/activities/activity/${id}`, payload).then(r => r.data);
+    // Update single activity by ID
+    return API.put(`/activities/${id}`, payload).then((r) => r.data);
   },
+
   delete(id: string) {
-    return API.delete(`/activities/activity/${id}`).then(r => r.data);
-  }
-}; 
+    // Delete activity by ID
+    return API.delete(`/activities/${id}`).then((r) => r.data);
+  },
+};

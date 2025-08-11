@@ -8,6 +8,7 @@ const tripSchema = new mongoose.Schema(
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     image: { type: String }, // optional trip cover image
+    coverCloudinaryId: { type: String },
     isPublic: { type: Boolean, default: false },
     collaborators: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     budget: { type: Number, default: 0 },

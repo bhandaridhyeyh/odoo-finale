@@ -4,7 +4,7 @@ import TokenModel from "../models/Token.model.js";
 import { signAccessToken, signRefreshToken, randomToken, verifyToken } from "../utils/token.js";
 import ms from "ms"; // small helper for durations; install or replace with numbers
 
-const ACCESS_TOKEN_EXPIRES = process.env.ACCESS_TOKEN_EXPIRES || "15m";
+const ACCESS_TOKEN_EXPIRES = process.env.ACCESS_TOKEN_EXPIRES || "7d";
 const REFRESH_TOKEN_EXPIRES = process.env.REFRESH_TOKEN_EXPIRES || "30d";
 const EMAIL_TOKEN_EXPIRES = process.env.EMAIL_TOKEN_EXPIRES || "1d";
 const EMAIL_OTP_EXPIRES_MINUTES = parseInt(process.env.EMAIL_OTP_EXPIRES_MINUTES || "10", 10);
@@ -104,8 +104,11 @@ const verifyEmailOtp = async (email, otp) => {
 };
 
 const getUserById = async (id) => {
-  const user = await User.findById(id).select("-password");
-  if (!user) throw new Error("User not found");
+  const user = await User.findById(id);
+  if (!user) {
+    console.error("No user found with this ID");
+    throw new Error("User not found");
+  }
   return user;
 };
 

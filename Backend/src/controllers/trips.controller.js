@@ -44,3 +44,33 @@ export const deleteTrip = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+export const uploadCover = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No file provided" });
+    const trip = await tripService.setCoverImage(req.params.id, req.file);
+    res.json(trip);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const addCollaborator = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const trip = await tripService.addCollaborator(req.params.id, userId);
+    res.json(trip);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const removeCollaborator = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const trip = await tripService.removeCollaborator(req.params.id, userId);
+    res.json(trip);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};

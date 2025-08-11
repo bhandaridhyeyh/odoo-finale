@@ -2,7 +2,7 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
-const signAccessToken = (payload, secret, expiresIn = "15m") => {
+const signAccessToken = (payload, secret, expiresIn = "7d") => {
   return jwt.sign(payload, secret, { expiresIn });
 };
 

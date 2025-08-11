@@ -11,6 +11,8 @@ import tripRoutes from "./routes/trips.routes.js";
 import stopRoutes from "./routes/stops.routes.js";
 import activityRoutes from "./routes/activities.routes.js";
 import documentRoutes from "./routes/documents.routes.js";
+import userRoutes from "./routes/users.routes.js";
+import searchRoutes from "./routes/search.js";
 import connectDB from "./db/mongoose.js";
 
 dotenv.config();
@@ -36,6 +38,8 @@ app.use("/api/trips", tripRoutes);
 app.use("/api/stops", stopRoutes);        // note: our stops.routes uses /:tripId and /stop/:id
 app.use("/api/activities", activityRoutes); // activities.routes uses /:stopId and /activity/:id
 app.use("/api/documents", documentRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/search", searchRoutes);
 
 // simple health route
 app.get("/api/health", (req, res) => res.json({ ok: true }));

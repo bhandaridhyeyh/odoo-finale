@@ -25,5 +25,16 @@ export const TripsAPI = {
   },
   delete(id: string) {
     return API.delete(`/trips/${id}`).then(r => r.data);
+  },
+  uploadCover(id: string, file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    return API.post(`/trips/${id}/cover`, form, { headers: { "Content-Type": "multipart/form-data" } }).then(r => r.data);
+  },
+  addCollaborator(id: string, userId: string) {
+    return API.post(`/trips/${id}/collaborators`, { userId }).then(r => r.data);
+  },
+  removeCollaborator(id: string, userId: string) {
+    return API.delete(`/trips/${id}/collaborators`, { data: { userId } }).then(r => r.data);
   }
 }; 

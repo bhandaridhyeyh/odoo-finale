@@ -105,15 +105,15 @@ const ViewItinerary = () => {
                 <CardContent>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">${trip?.budget || 0}</div>
+                      <div className="text-2xl font-bold text-primary">₹{trip?.budget || 0}</div>
                       <div className="text-sm text-muted-foreground">Total Budget</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-warning">$0</div>
+                      <div className="text-2xl font-bold text-warning">₹0</div>
                       <div className="text-sm text-muted-foreground">Used</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-success">${trip?.budget || 0}</div>
+                      <div className="text-2xl font-bold text-success">₹{trip?.budget || 0}</div>
                       <div className="text-sm text-muted-foreground">Remaining</div>
                     </div>
                   </div>
@@ -166,7 +166,7 @@ const ViewItinerary = () => {
                               </div>
                               <div className="text-right">
                                 <div className="font-medium text-primary">
-                                  ${activity.cost || 0}
+                                  ₹{activity.cost || 0}
                                 </div>
                               </div>
                             </div>

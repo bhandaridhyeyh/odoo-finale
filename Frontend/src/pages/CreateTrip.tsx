@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, MapPin, Users, Globe, Lock, Plus, ArrowRight } from "lucide-react";
+import { Calendar, MapPin, Users, Globe, Lock, Plus, ArrowRight, Image as ImageIcon } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ const CreateTrip = () => {
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   const suggestedPlaces = [
@@ -30,12 +31,12 @@ const CreateTrip = () => {
   ];
 
   const activities = [
-    { name: "Sunset Photography Tour", duration: "3 hours", price: "$120" },
-    { name: "Local Cooking Class", duration: "4 hours", price: "$85" },
-    { name: "Historical Walking Tour", duration: "2 hours", price: "$45" },
-    { name: "Adventure Sports Package", duration: "Full day", price: "$200" },
-    { name: "Wine Tasting Experience", duration: "3 hours", price: "$95" },
-    { name: "Cultural Museum Visit", duration: "2 hours", price: "$30" },
+    { name: "Sunset Photography Tour", duration: "3 hours", price: "₹120" },
+    { name: "Local Cooking Class", duration: "4 hours", price: "₹85" },
+    { name: "Historical Walking Tour", duration: "2 hours", price: "₹45" },
+    { name: "Adventure Sports Package", duration: "Full day", price: "₹200" },
+    { name: "Wine Tasting Experience", duration: "3 hours", price: "₹95" },
+    { name: "Cultural Museum Visit", duration: "2 hours", price: "₹30" },
   ];
 
   const addCollaborator = () => {
@@ -57,6 +58,9 @@ const CreateTrip = () => {
         endDate,
         isPublic,
       });
+      if (coverFile) {
+        await TripsAPI.uploadCover(trip._id, coverFile);
+      }
       navigate(`/build-itinerary?tripId=${trip._id}`);
     } catch (e) {
       console.error(e);
@@ -126,7 +130,7 @@ const CreateTrip = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="destination">Primary Destination</Label>
+                    <Label htmlFor="destination">Decription</Label>
                     <Input
                       id="destination"
                       placeholder="Where would you like to go?"
@@ -134,6 +138,15 @@ const CreateTrip = () => {
                       onChange={(e) => setSelectedPlace(e.target.value)}
                       className="mt-2"
                     />
+                  </div>
+
+                  {/* Cover Photo */}
+                  <div className="space-y-2">
+                    <Label htmlFor="cover">Cover Photo (optional)</Label>
+                    <Input id="cover" type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] || null)} />
+                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                      <ImageIcon className="w-4 h-4" /> JPG/PNG recommended
+                    </div>
                   </div>
 
                   {/* Privacy Toggle */}

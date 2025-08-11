@@ -6,7 +6,11 @@ import {
   getTrip,
   updateTrip,
   deleteTrip,
+  uploadCover,
+  addCollaborator,
+  removeCollaborator,
 } from "../controllers/trips.controller.js";
+import { uploadMiddleware } from "../services/cloudinary.service.js";
 
 const router = express.Router();
 
@@ -18,5 +22,9 @@ router.route("/:id")
   .get(protect, getTrip)
   .put(protect, updateTrip)
   .delete(protect, deleteTrip);
+
+router.post("/:id/cover", protect, uploadMiddleware.single("file"), uploadCover);
+router.post("/:id/collaborators", protect, addCollaborator);
+router.delete("/:id/collaborators", protect, removeCollaborator);
 
 export default router;

@@ -34,7 +34,7 @@ const Index = () => {
       description: "Experience stunning sunsets, white-washed buildings, and crystal-clear waters in this iconic Greek island paradise.",
     },
     {
-      id: "2", 
+      id: "2",
       name: "Swiss Alps",
       country: "Switzerland",
       image: mountainsImage,
@@ -46,7 +46,7 @@ const Index = () => {
     {
       id: "3",
       name: "Tokyo",
-      country: "Japan", 
+      country: "Japan",
       image: cityImage,
       rating: 4.7,
       reviewCount: 2108,
@@ -56,8 +56,8 @@ const Index = () => {
   ];
 
   const handleLike = (id: string) => {
-    setLikedDestinations(prev => 
-      prev.includes(id) 
+    setLikedDestinations(prev =>
+      prev.includes(id)
         ? prev.filter(item => item !== id)
         : [...prev, id]
     );
@@ -86,7 +86,7 @@ const Index = () => {
     title: trip.title,
     destination: trip.description || "",
     image: trip.image || "/placeholder.svg",
-    duration: `${Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000*60*60*24))} days`,
+    duration: `${Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000 * 60 * 60 * 24))} days`,
     travelers: (trip.collaborators?.length || 0) + 1,
     cost: trip.budget || 0,
     status: "upcoming" as const,
@@ -121,14 +121,16 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Button variant="hero" size="xl" asChild>
-                <Link to="/register">
+                <Link to="/create-trip">
                   Start Planning
                   <ArrowRight className="w-5 h-5" />
                 </Link>
               </Button>
-              <Button variant="outline" size="xl" className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20">
-                Explore Destinations
-              </Button>
+              <Link to={"/search"}>
+                <Button variant="outline" size="xl" className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20">
+                  Explore Destinations
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -226,7 +228,7 @@ const Index = () => {
               </p>
             </div>
             <Button variant="outline" asChild>
-              <Link to="/destinations">
+              <Link to="/search">
                 View All
                 <ArrowRight className="w-4 h-4" />
               </Link>
@@ -243,69 +245,6 @@ const Index = () => {
                 onClick={(id) => console.log(`Navigate to destination ${id}`)}
               />
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Sample Trips */}
-      <section className="py-20 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Inspiring Trip Ideas
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Get inspired by these amazing trips planned by our community
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {[1,2].map((i) => (
-              <TripCard
-                key={i}
-                id={String(i)}
-                title={i === 1 ? "European Adventure" : "Mountain Retreat"}
-                destination={i === 1 ? "Paris, Rome, Barcelona" : "Swiss Alps"}
-                image={i === 1 ? heroImage : mountainsImage}
-                duration={i === 1 ? "14 days" : "7 days"}
-                travelers={i === 1 ? 4 : 2}
-                cost={i === 1 ? 8500 : 3200}
-                status="upcoming"
-              />
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Button variant="hero" size="lg" asChild>
-              <Link to="/community">
-                Explore More Trips
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent" />
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Ready to Start Your Adventure?
-          </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Join thousands of travelers who trust GlobeTrotter to plan their perfect trips.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="secondary" size="xl" asChild>
-              <Link to="/register">
-                Get Started Free
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-            </Button>
-            <Button variant="outline" size="xl" className="bg-white/10 backdrop-blur-sm text-white border-white/30 hover:bg-white/20">
-              Learn More
-            </Button>
           </div>
         </div>
       </section>
