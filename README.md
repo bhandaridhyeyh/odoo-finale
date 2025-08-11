@@ -1,1 +1,1 @@
-# odoo-finale
+# GlobeTrotter – Empowering Personalized Travel Planning
