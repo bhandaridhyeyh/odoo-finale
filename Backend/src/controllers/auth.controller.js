@@ -1,6 +1,7 @@
 // src/controllers/auth.controller.js
 import authService from "../services/auth.service.js";
 import emailService from "../services/email.service.js"; // we'll give a simple email service below
+import User from "../models/User.model.js";
 
 export const register = async (req, res, next) => {
   try {
@@ -11,7 +12,15 @@ export const register = async (req, res, next) => {
     // send verification email
     const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${emailToken}`;
     await emailService.sendEmailVerification(user.email, user.firstName, verifyUrl);
-    return res.status(201).json({ message: "Registered. Check your email to verify your account." });
+    // also send OTP for alternative verification
+    try {
+      const otp = await authService.createAndSendEmailOtp(user);
+      await emailService.sendEmailOtp(user.email, user.firstName || "", otp);
+    } catch (e) {
+      // non-fatal if OTP email fails
+      console.warn("Failed to send OTP email:", e?.message);
+    }
+    return res.status(201).json({ message: "Registered. Check your email to verify your account (link or OTP)." });
   } catch (err) {
     return next(err);
   }
@@ -62,6 +71,46 @@ export const verifyEmail = async (req, res, next) => {
     const user = await authService.verifyEmailToken(token);
     // optional: redirect to frontend success page
     return res.json({ message: "Email verified", user: { id: user._id, email: user.email } });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const sendOtp = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      // do not reveal that the email doesn't exist
+      return res.json({ message: "OTP sent" });
+    }
+    const otp = await authService.createAndSendEmailOtp(user);
+    await emailService.sendEmailOtp(user.email, user.firstName || "", otp);
+    return res.json({ message: "OTP sent" });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const verifyOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await authService.verifyEmailOtp(email, otp);
+    return res.json({ message: "Email verified via OTP", user: { id: user._id, email: user.email, isVerified: user.isVerified } });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+export const me = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    if (!token) return res.status(401).json({ message: "Unauthorized" });
+    const { default: jwt } = await import("jsonwebtoken");
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const user = await authService.getUserById(decoded.sub);
+    return res.json({ user });
   } catch (err) {
     return next(err);
   }

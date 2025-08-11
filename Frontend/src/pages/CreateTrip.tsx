@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Calendar, MapPin, Users, Globe, Lock, Plus, ArrowRight } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -7,13 +8,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { TripsAPI } from "@/api/trips";
 
 const CreateTrip = () => {
+  const navigate = useNavigate();
   const [isPublic, setIsPublic] = useState(false);
   const [collaborators, setCollaborators] = useState<string[]>([]);
   const [selectedPlace, setSelectedPlace] = useState("");
+  const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const suggestedPlaces = [
     { name: "Santorini, Greece", type: "Island Paradise", rating: 4.8 },
@@ -39,6 +44,25 @@ const CreateTrip = () => {
 
   const removeCollaborator = (index: number) => {
     setCollaborators(collaborators.filter((_, i) => i !== index));
+  };
+
+  const handleCreate = async () => {
+    if (!title || !startDate || !endDate) return;
+    setLoading(true);
+    try {
+      const trip = await TripsAPI.create({
+        title,
+        description: selectedPlace,
+        startDate,
+        endDate,
+        isPublic,
+      });
+      navigate(`/build-itinerary?tripId=${trip._id}`);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -71,6 +95,8 @@ const CreateTrip = () => {
                     <Label htmlFor="trip-name">Trip Name</Label>
                     <Input
                       id="trip-name"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
                       placeholder="e.g., European Adventure 2024"
                       className="mt-2"
                     />
@@ -233,9 +259,13 @@ const CreateTrip = () => {
             <Button variant="outline" size="lg">
               Save as Draft
             </Button>
-            <Button variant="hero" size="lg">
-              Build Itinerary
-              <ArrowRight className="w-4 h-4 ml-2" />
+            <Button variant="hero" size="lg" onClick={handleCreate} disabled={loading}>
+              {loading ? "Creating..." : (
+                <>
+                  Build Itinerary
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </>
+              )}
             </Button>
           </div>
         </div>

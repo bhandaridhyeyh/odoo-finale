@@ -14,6 +14,8 @@ import Search from "./pages/Search";
 import ViewItinerary from "./pages/ViewItinerary";
 import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
+import OAuthSuccess from "./pages/OAuthSuccess";
+import VerifyEmail from "./pages/VerifyEmail";
 
 const queryClient = new QueryClient();
 
@@ -22,22 +24,22 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/create-trip" element={<CreateTrip />} />
-          <Route path="/build-itinerary" element={<BuildItinerary />} />
-          <Route path="/trips" element={<Trips />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/view-itinerary" element={<ViewItinerary />} />
-          <Route path="/community" element={<Community />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/create-trip" element={<CreateTrip />} />
+        <Route path="/build-itinerary" element={<BuildItinerary />} />
+        <Route path="/trips" element={<Trips />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/view-itinerary" element={<ViewItinerary />} />
+        <Route path="/community" element={<Community />} />
+        <Route path="/oauth-success" element={<OAuthSuccess />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </TooltipProvider>
   </QueryClientProvider>
 );

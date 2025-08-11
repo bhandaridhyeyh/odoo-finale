@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useContext } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   Menu, 
@@ -8,12 +8,16 @@ import {
   User, 
   Calendar, 
   MapPin,
-  LogIn
+  LogIn,
+  LogOut
 } from "lucide-react";
+import { AuthContext } from "@/context/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useContext(AuthContext);
   
   const navigation = [
     { name: "Discover", href: "/search", icon: MapPin },
@@ -23,6 +27,11 @@ const Navbar = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-lg border-b border-border/50 shadow-travel">
@@ -59,15 +68,33 @@ const Navbar = () => {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/login">
-                <LogIn className="w-4 h-4" />
-                Sign In
-              </Link>
-            </Button>
-            <Button variant="hero" size="sm" asChild>
-              <Link to="/register">Get Started</Link>
-            </Button>
+            {!user ? (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/login">
+                    <LogIn className="w-4 h-4" />
+                    Sign In
+                  </Link>
+                </Button>
+                <Button variant="hero" size="sm" asChild>
+                  <Link to="/register">Get Started</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="text-sm text-muted-foreground">Hi, {user.firstName || user.email}</span>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/profile">
+                    <User className="w-4 h-4" />
+                    Profile
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -104,19 +131,35 @@ const Navbar = () => {
                 </Link>
               );
             })}
-            
             <div className="pt-4 pb-2 space-y-2">
-              <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
-                <Link to="/login" onClick={() => setIsOpen(false)}>
-                  <LogIn className="w-4 h-4" />
-                  Sign In
-                </Link>
-              </Button>
-              <Button variant="hero" size="sm" className="w-full" asChild>
-                <Link to="/register" onClick={() => setIsOpen(false)}>
-                  Get Started
-                </Link>
-              </Button>
+              {!user ? (
+                <>
+                  <Button variant="ghost" size="sm" className="w-full justify-start" asChild>
+                    <Link to="/login" onClick={() => setIsOpen(false)}>
+                      <LogIn className="w-4 h-4" />
+                      Sign In
+                    </Link>
+                  </Button>
+                  <Button variant="hero" size="sm" className="w-full" asChild>
+                    <Link to="/register" onClick={() => setIsOpen(false)}>
+                      Get Started
+                    </Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" className="w-full justify-start" asChild>
+                    <Link to="/profile" onClick={() => setIsOpen(false)}>
+                      <User className="w-4 h-4" />
+                      Profile
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { setIsOpen(false); handleLogout(); }}>
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>

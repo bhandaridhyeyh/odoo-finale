@@ -7,6 +7,7 @@ import ms from "ms"; // small helper for durations; install or replace with numb
 const ACCESS_TOKEN_EXPIRES = process.env.ACCESS_TOKEN_EXPIRES || "15m";
 const REFRESH_TOKEN_EXPIRES = process.env.REFRESH_TOKEN_EXPIRES || "30d";
 const EMAIL_TOKEN_EXPIRES = process.env.EMAIL_TOKEN_EXPIRES || "1d";
+const EMAIL_OTP_EXPIRES_MINUTES = parseInt(process.env.EMAIL_OTP_EXPIRES_MINUTES || "10", 10);
 
 const registerUser = async (userData) => {
   const { email } = userData;
@@ -68,4 +69,55 @@ const verifyEmailToken = async (token) => {
   return user;
 };
 
-export default { registerUser, loginUser, refreshAccessToken, logout, verifyEmailToken };
+const createAndStoreRefresh = async (userId) => {
+  const payload = { sub: userId.toString() };
+  const refreshToken = signRefreshToken(payload, process.env.JWT_REFRESH_SECRET, REFRESH_TOKEN_EXPIRES);
+  const expiresAt = new Date(Date.now() + (ms(REFRESH_TOKEN_EXPIRES) || 30 * 24 * 60 * 60 * 1000));
+  await TokenModel.create({ userId, token: refreshToken, type: "refresh", expiresAt });
+  return refreshToken;
+};
+
+const issueAccessToken = (user) => {
+  return signAccessToken({ sub: user._id.toString(), roles: user.roles }, process.env.JWT_ACCESS_SECRET, ACCESS_TOKEN_EXPIRES);
+};
+
+const generateEmailOtp = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+const createAndSendEmailOtp = async (user) => {
+  const otp = generateEmailOtp();
+  const expiresAt = new Date(Date.now() + EMAIL_OTP_EXPIRES_MINUTES * 60 * 1000);
+  await TokenModel.create({ userId: user._id, token: otp, type: "emailOtp", expiresAt });
+  return otp;
+};
+
+const verifyEmailOtp = async (email, otp) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+  const doc = await TokenModel.findOne({ userId: user._id, token: otp, type: "emailOtp" });
+  if (!doc) throw new Error("Invalid or expired OTP");
+  user.isVerified = true;
+  await user.save();
+  await TokenModel.deleteOne({ _id: doc._id });
+  return user;
+};
+
+const getUserById = async (id) => {
+  const user = await User.findById(id).select("-password");
+  if (!user) throw new Error("User not found");
+  return user;
+};
+
+export default {
+  registerUser,
+  loginUser,
+  refreshAccessToken,
+  logout,
+  verifyEmailToken,
+  createAndStoreRefresh,
+  issueAccessToken,
+  createAndSendEmailOtp,
+  verifyEmailOtp,
+  getUserById,
+};

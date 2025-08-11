@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import API from "@/api/axios";
 import { Eye, EyeOff, Mail, Lock, User, Phone, MapPin, Plane } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,14 +21,33 @@ const Register = () => {
     confirmPassword: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Registration attempt:", formData);
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    try {
+      const payload = { ...formData };
+      await API.post("/auth/register", payload);
+      alert("Registration successful! Please verify your email using the link or OTP we sent.");
+      navigate("/verify-email");
+    } catch (error: any) {
+      if (error.response) {
+        alert(`Registration failed: ${error.response.data.message || error.response.statusText}`);
+      } else {
+        alert(`Registration failed: ${error.message}`);
+      }
+    }
   };
 
   const handleGoogleAuth = () => {
-    console.log("Google OAuth triggered");
-  };
+    window.location.href = `${import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"}/api/auth/google`;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 px-4 py-8">
@@ -39,7 +59,7 @@ const Register = () => {
               <Plane className="w-8 h-8 text-white" />
             </div>
           </div>
-          
+
           <div>
             <CardTitle className="text-2xl font-bold hero-text">Join GlobeTrotter</CardTitle>
             <CardDescription className="text-muted-foreground mt-2">

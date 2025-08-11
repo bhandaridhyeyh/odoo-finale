@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import { Plus, ArrowRight, Compass, Users, Calendar, Star } from "lucide-react";
 import Layout from "@/components/layout/Layout";
@@ -9,9 +9,18 @@ import TripCard from "@/components/ui/TripCard";
 import heroImage from "@/assets/hero-beach.jpg";
 import mountainsImage from "@/assets/destination-mountains.jpg";
 import cityImage from "@/assets/destination-city.jpg";
+import { TripsAPI } from "@/api/trips";
+import { AuthContext } from "@/context/AuthContext";
 
 const Index = () => {
   const [likedDestinations, setLikedDestinations] = useState<string[]>([]);
+  const [userTrips, setUserTrips] = useState<any[]>([]);
+  const { user } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (!user) return;
+    TripsAPI.list().then(setUserTrips).catch(() => setUserTrips([]));
+  }, [user]);
 
   const featuredDestinations = [
     {
@@ -46,31 +55,6 @@ const Index = () => {
     },
   ];
 
-  const sampleTrips = [
-    {
-      id: "1",
-      title: "European Adventure",
-      destination: "Paris, Rome, Barcelona",
-      image: heroImage,
-      duration: "14 days",
-      travelers: 4,
-      cost: 8500,
-      status: 'upcoming' as const,
-      collaborators: ["Alice", "Bob", "Charlie"],
-    },
-    {
-      id: "2",
-      title: "Mountain Retreat",
-      destination: "Swiss Alps",
-      image: mountainsImage,
-      duration: "7 days",
-      travelers: 2,
-      cost: 3200,
-      status: 'completed' as const,
-      collaborators: ["David"],
-    },
-  ];
-
   const handleLike = (id: string) => {
     setLikedDestinations(prev => 
       prev.includes(id) 
@@ -96,6 +80,17 @@ const Index = () => {
       description: "Keep all your trip details in one place. Documents, reservations, and schedules."
     },
   ];
+
+  const normalize = (trip: any) => ({
+    id: trip._id,
+    title: trip.title,
+    destination: trip.description || "",
+    image: trip.image || "/placeholder.svg",
+    duration: `${Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000*60*60*24))} days`,
+    travelers: (trip.collaborators?.length || 0) + 1,
+    cost: trip.budget || 0,
+    status: "upcoming" as const,
+  });
 
   return (
     <Layout>
@@ -155,6 +150,36 @@ const Index = () => {
           </Link>
         </Button>
       </section>
+
+      {/* Previous Trips (if any) */}
+      {user && userTrips.length > 0 && (
+        <section className="py-20 bg-muted/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-12">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                  Your Previous Trips
+                </h2>
+                <p className="text-xl text-muted-foreground">
+                  Pick up where you left off
+                </p>
+              </div>
+              <Button variant="outline" asChild>
+                <Link to="/trips">
+                  View All
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {userTrips.slice(0, 3).map((trip) => (
+                <TripCard key={trip._id} {...normalize(trip)} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Features Section */}
       <section className="py-20 bg-muted/30">
@@ -235,11 +260,17 @@ const Index = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {sampleTrips.map((trip) => (
+            {[1,2].map((i) => (
               <TripCard
-                key={trip.id}
-                {...trip}
-                onClick={(id) => console.log(`Navigate to trip ${id}`)}
+                key={i}
+                id={String(i)}
+                title={i === 1 ? "European Adventure" : "Mountain Retreat"}
+                destination={i === 1 ? "Paris, Rome, Barcelona" : "Swiss Alps"}
+                image={i === 1 ? heroImage : mountainsImage}
+                duration={i === 1 ? "14 days" : "7 days"}
+                travelers={i === 1 ? 4 : 2}
+                cost={i === 1 ? 8500 : 3200}
+                status="upcoming"
               />
             ))}
           </div>

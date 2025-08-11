@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Filter, Calendar, MapPin, Plus } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -6,109 +6,45 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TripCard from "@/components/ui/TripCard";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { TripsAPI } from "@/api/trips";
 
 const Trips = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("date");
   const [filterBy, setFilterBy] = useState("all");
+  const [trips, setTrips] = useState<any[]>([]);
+  const navigate = useNavigate();
 
-  const mockTrips = [
-    {
-      id: "1",
-      title: "European Grand Tour",
-      destination: "Paris, Rome, Barcelona",
-      image: "/src/assets/hero-beach.jpg",
-      duration: "14 days",
-      travelers: 4,
-      cost: 8500,
-      status: 'upcoming' as const,
-      collaborators: ["Alice Smith", "Bob Johnson", "Charlie Brown"],
-    },
-    {
-      id: "2",
-      title: "Swiss Alps Adventure",
-      destination: "Zurich, Interlaken, Zermatt",
-      image: "/src/assets/destination-mountains.jpg", 
-      duration: "7 days",
-      travelers: 2,
-      cost: 3200,
-      status: 'ongoing' as const,
-      collaborators: ["David Wilson"],
-    },
-    {
-      id: "3",
-      title: "Tokyo Culture Immersion",
-      destination: "Tokyo, Kyoto, Osaka",
-      image: "/src/assets/destination-city.jpg",
-      duration: "10 days", 
-      travelers: 3,
-      cost: 4500,
-      status: 'completed' as const,
-      collaborators: ["Emma Davis", "Frank Miller"],
-    },
-    {
-      id: "4",
-      title: "Bali Tropical Escape",
-      destination: "Ubud, Canggu, Seminyak",
-      image: "/src/assets/hero-beach.jpg",
-      duration: "8 days",
-      travelers: 2,
-      cost: 2100,
-      status: 'completed' as const,
-      collaborators: ["Grace Taylor"],
-    },
-    {
-      id: "5",
-      title: "New York City Explorer",
-      destination: "Manhattan, Brooklyn",
-      image: "/src/assets/destination-city.jpg",
-      duration: "5 days",
-      travelers: 1,
-      cost: 1800,
-      status: 'upcoming' as const,
-      collaborators: [],
-    },
-  ];
+  useEffect(() => {
+    TripsAPI.list().then(setTrips).catch(console.error);
+  }, []);
 
-  const getFilteredTrips = (status?: string) => {
-    let filtered = mockTrips;
-    
-    if (status && status !== 'all') {
-      filtered = filtered.filter(trip => trip.status === status);
-    }
-    
-    if (searchQuery) {
-      filtered = filtered.filter(trip => 
-        trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        trip.destination.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    // Sort trips
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'date':
-          return a.title.localeCompare(b.title); // Mock sort by title for now
-        case 'cost':
-          return b.cost - a.cost;
-        case 'duration':
-          return parseInt(b.duration) - parseInt(a.duration);
-        default:
-          return 0;
-      }
-    });
-    
-    return filtered;
-  };
+  const normalize = (trip: any) => ({
+    id: trip._id,
+    title: trip.title,
+    destination: trip.description || "",
+    image: trip.image || "/placeholder.svg",
+    duration: `${Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000*60*60*24))} days`,
+    travelers: (trip.collaborators?.length || 0) + 1,
+    cost: trip.budget || 0,
+    status: "upcoming" as const,
+  });
 
-  const upcomingTrips = getFilteredTrips('upcoming');
-  const ongoingTrips = getFilteredTrips('ongoing');
-  const completedTrips = getFilteredTrips('completed');
-  const allTrips = getFilteredTrips();
+  const filtered = trips
+    .map(normalize)
+    .filter((t) =>
+      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.destination.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+  const upcomingTrips = filtered;
+  const ongoingTrips = filtered;
+  const completedTrips = filtered;
+  const allTrips = filtered;
 
   const handleTripClick = (id: string) => {
-    console.log(`Navigate to trip ${id} itinerary`);
+    navigate(`/view-itinerary?tripId=${id}`);
   };
 
   return (
@@ -164,7 +100,7 @@ const Trips = () => {
 
           {/* Trip Tabs */}
           <Tabs defaultValue="all" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 max-w-md">
+            <TabsList className="grid w/full grid-cols-4 max-w-md">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
               <TabsTrigger value="ongoing">Ongoing</TabsTrigger>
@@ -224,7 +160,7 @@ const Trips = () => {
                 <Calendar className="w-5 h-5 text-success" />
                 <h2 className="text-xl font-semibold">Completed Trips ({completedTrips.length})</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md/grid-cols-2 lg:grid-cols-3 gap-6">
                 {completedTrips.map((trip) => (
                   <TripCard
                     key={trip.id}

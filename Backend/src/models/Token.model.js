@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 
 const TokenSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" },
-  token: { type: String, required: true }, // could be email verification token or refresh token
-  type: { type: String, enum: ["refresh", "emailVerify"], required: true },
+  token: { type: String, required: true }, // could be email verification token, OTP, or refresh token
+  type: { type: String, enum: ["refresh", "emailVerify", "emailOtp"], required: true },
   expiresAt: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now },
 });

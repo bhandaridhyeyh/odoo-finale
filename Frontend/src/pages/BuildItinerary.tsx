@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, Calendar, MapPin, DollarSign, Upload, FileText, Clock, Edit3, Save } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -7,76 +8,66 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { TripsAPI } from "@/api/trips";
+import { StopsAPI } from "@/api/stops";
+import { ActivitiesAPI } from "@/api/activities";
+import { DocumentsAPI } from "@/api/documents";
 
 const BuildItinerary = () => {
+  const [params] = useSearchParams();
+  const tripId = params.get("tripId");
   const [editingDay, setEditingDay] = useState<number | null>(null);
-  const [tripBudget, setTripBudget] = useState("5000");
-  
-  const [itinerary, setItinerary] = useState([
-    {
-      day: 1,
-      date: "March 15, 2024",
-      location: "Paris, France",
-      activities: [
-        { time: "09:00", activity: "Arrival & Check-in", budget: 0, notes: "Hotel near Eiffel Tower" },
-        { time: "14:00", activity: "Eiffel Tower Visit", budget: 150, notes: "Book tickets in advance" },
-        { time: "18:00", activity: "Seine River Cruise", budget: 80, notes: "Sunset cruise recommended" },
-      ]
-    },
-    {
-      day: 2,
-      date: "March 16, 2024", 
-      location: "Paris, France",
-      activities: [
-        { time: "10:00", activity: "Louvre Museum", budget: 120, notes: "Book skip-the-line tickets" },
-        { time: "15:00", activity: "Lunch at Café de Flore", budget: 60, notes: "Famous historic café" },
-        { time: "17:00", activity: "Champs-Élysées Shopping", budget: 200, notes: "Budget for souvenirs" },
-      ]
-    }
-  ]);
+  const [tripBudget, setTripBudget] = useState("0");
+  const [tripTitle, setTripTitle] = useState("");
+  const [stops, setStops] = useState<any[]>([]);
 
-  const documents = [
-    { name: "Passport_John_Doe.pdf", type: "ID", uploadDate: "2024-03-01" },
-    { name: "Flight_Tickets_Paris.pdf", type: "Travel", uploadDate: "2024-03-02" },
-    { name: "Hotel_Confirmation.pdf", type: "Accommodation", uploadDate: "2024-03-02" },
-  ];
+  useEffect(() => {
+    if (!tripId) return;
+    TripsAPI.get(tripId).then((t) => {
+      setTripTitle(t.title);
+      setTripBudget(String(t.budget || 0));
+    }).catch(console.error);
+    StopsAPI.list(tripId).then(setStops).catch(console.error);
+  }, [tripId]);
 
-  const addNewDay = () => {
-    const newDay = {
-      day: itinerary.length + 1,
-      date: `March ${15 + itinerary.length}, 2024`,
-      location: "New Location",
-      activities: [
-        { time: "09:00", activity: "New Activity", budget: 0, notes: "" }
-      ]
-    };
-    setItinerary([...itinerary, newDay]);
+  const addStop = async () => {
+    if (!tripId) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const stop = await StopsAPI.create(tripId, { name: "New Stop", location: "", date: today });
+    setStops((prev) => [...prev, stop]);
   };
 
-  const addActivity = (dayIndex: number) => {
-    const newItinerary = [...itinerary];
-    newItinerary[dayIndex].activities.push({
-      time: "12:00",
-      activity: "New Activity",
-      budget: 0,
-      notes: ""
-    });
-    setItinerary(newItinerary);
+  const addActivity = async (stopIndex: number) => {
+    const stop = stops[stopIndex];
+    const activity = await ActivitiesAPI.create(stop._id, { name: "New Activity", time: "12:00", cost: 0 });
+    const updated = [...stops];
+    if (!updated[stopIndex].activities) updated[stopIndex].activities = [];
+    updated[stopIndex].activities.push(activity);
+    setStops(updated);
   };
 
-  const updateActivity = (dayIndex: number, activityIndex: number, field: string, value: string | number) => {
-    const newItinerary = [...itinerary];
-    newItinerary[dayIndex].activities[activityIndex] = {
-      ...newItinerary[dayIndex].activities[activityIndex],
-      [field]: value
-    };
-    setItinerary(newItinerary);
+  const updateActivity = async (dayIndex: number, activityIndex: number, field: string, value: string | number) => {
+    const stop = stops[dayIndex];
+    const activity = stop.activities[activityIndex];
+    const updated = await ActivitiesAPI.update(activity._id, { [field]: value } as any);
+    const newStops = [...stops];
+    newStops[dayIndex].activities[activityIndex] = updated;
+    setStops(newStops);
   };
 
   const getTotalBudgetUsed = () => {
-    return itinerary.reduce((total, day) => {
-      return total + day.activities.reduce((dayTotal, activity) => dayTotal + activity.budget, 0);
+    return stops.reduce((total, stop) => {
+      const activities = stop.activities || [];
+      return total + activities.reduce((acc: number, a: any) => acc + (a.cost || 0), 0);
     }, 0);
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!tripId) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await DocumentsAPI.upload(tripId, file);
+    alert("Uploaded document");
   };
 
   return (
@@ -90,7 +81,7 @@ const BuildItinerary = () => {
                 Build Your Itinerary
               </h1>
               <p className="text-xl text-muted-foreground">
-                European Adventure 2024 • 7 days in Paris, Rome, Barcelona
+                {tripTitle}
               </p>
             </div>
             <div className="flex gap-3">
@@ -144,14 +135,14 @@ const BuildItinerary = () => {
                 </CardContent>
               </Card>
 
-              {/* Daily Itinerary */}
-              {itinerary.map((day, dayIndex) => (
-                <Card key={day.day}>
+              {/* Daily Itinerary (mapped to stops) */}
+              {stops.map((stop, dayIndex) => (
+                <Card key={stop._id}>
                   <CardHeader>
                     <div className="flex justify-between items-center">
                       <CardTitle className="flex items-center gap-2">
                         <Calendar className="w-5 h-5 text-primary" />
-                        Day {day.day} - {day.date}
+                        {stop.name} - {new Date(stop.date).toDateString()}
                       </CardTitle>
                       <Button
                         variant="outline"
@@ -161,34 +152,21 @@ const BuildItinerary = () => {
                         <Edit3 className="w-4 h-4" />
                       </Button>
                     </div>
-                    {editingDay === dayIndex && (
-                      <div className="mt-4 space-y-2">
-                        <Input
-                          value={day.location}
-                          onChange={(e) => {
-                            const newItinerary = [...itinerary];
-                            newItinerary[dayIndex].location = e.target.value;
-                            setItinerary(newItinerary);
-                          }}
-                          placeholder="Location"
-                        />
-                      </div>
-                    )}
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <MapPin className="w-4 h-4" />
-                      <span>{day.location}</span>
+                      <span>{stop.location}</span>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {day.activities.map((activity, activityIndex) => (
-                        <div key={activityIndex} className="flex gap-4 p-4 border rounded-lg">
+                      {(stop.activities || []).map((activity: any, activityIndex: number) => (
+                        <div key={activity._id || activityIndex} className="flex gap-4 p-4 border rounded-lg">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-[60px]">
                             <Clock className="w-4 h-4" />
                             {editingDay === dayIndex ? (
                               <Input
                                 type="time"
-                                value={activity.time}
+                                value={activity.time || "12:00"}
                                 onChange={(e) => updateActivity(dayIndex, activityIndex, 'time', e.target.value)}
                                 className="w-20 h-8 text-xs"
                               />
@@ -200,32 +178,32 @@ const BuildItinerary = () => {
                             {editingDay === dayIndex ? (
                               <>
                                 <Input
-                                  value={activity.activity}
-                                  onChange={(e) => updateActivity(dayIndex, activityIndex, 'activity', e.target.value)}
+                                  value={activity.name}
+                                  onChange={(e) => updateActivity(dayIndex, activityIndex, 'name', e.target.value)}
                                   placeholder="Activity"
                                 />
                                 <Input
                                   type="number"
-                                  value={activity.budget}
-                                  onChange={(e) => updateActivity(dayIndex, activityIndex, 'budget', parseInt(e.target.value) || 0)}
+                                  value={activity.cost || 0}
+                                  onChange={(e) => updateActivity(dayIndex, activityIndex, 'cost', parseInt(e.target.value) || 0)}
                                   placeholder="Budget"
                                   className="w-32"
                                 />
                                 <Textarea
-                                  value={activity.notes}
-                                  onChange={(e) => updateActivity(dayIndex, activityIndex, 'notes', e.target.value)}
+                                  value={activity.description || ''}
+                                  onChange={(e) => updateActivity(dayIndex, activityIndex, 'description', e.target.value)}
                                   placeholder="Notes"
                                   className="h-20"
                                 />
                               </>
                             ) : (
                               <>
-                                <div className="font-medium">{activity.activity}</div>
+                                <div className="font-medium">{activity.name}</div>
                                 <div className="flex gap-2">
-                                  <Badge variant="secondary">${activity.budget}</Badge>
+                                  <Badge variant="secondary">${activity.cost || 0}</Badge>
                                 </div>
-                                {activity.notes && (
-                                  <div className="text-sm text-muted-foreground">{activity.notes}</div>
+                                {activity.description && (
+                                  <div className="text-sm text-muted-foreground">{activity.description}</div>
                                 )}
                               </>
                             )}
@@ -245,14 +223,14 @@ const BuildItinerary = () => {
                 </Card>
               ))}
 
-              {/* Add New Day */}
+              {/* Add New Stop */}
               <Button
                 variant="outline"
-                onClick={addNewDay}
+                onClick={addStop}
                 className="w-full h-16 border-dashed border-2"
               >
                 <Plus className="w-5 h-5 mr-2" />
-                Add New Day
+                Add New Day/Stop
               </Button>
             </div>
 
@@ -268,13 +246,7 @@ const BuildItinerary = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {documents.map((doc, index) => (
-                      <div key={index} className="p-3 border rounded-lg">
-                        <div className="font-medium text-sm">{doc.name}</div>
-                        <div className="text-xs text-muted-foreground">{doc.type}</div>
-                        <div className="text-xs text-muted-foreground">Uploaded: {doc.uploadDate}</div>
-                      </div>
-                    ))}
+                    <Input type="file" onChange={handleUpload} />
                     <Button variant="outline" className="w-full">
                       <Upload className="w-4 h-4 mr-2" />
                       Upload Document

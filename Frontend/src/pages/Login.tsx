@@ -1,34 +1,50 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, Plane } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import API from "@/api/axios";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login attempt:", formData);
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await API.post("/auth/login", formData);
+      // Save tokens
+      localStorage.setItem("token", res.data.accessToken);
+      navigate("/trips");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = () => {
+    const backendBase = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+    window.location.href = `${backendBase}/api/auth/google`;
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 px-4">
       <Card className="w-full max-w-md shadow-travel-strong border-0 bg-white/80 backdrop-blur-sm">
         <CardHeader className="text-center space-y-6">
-          {/* Logo */}
           <div className="flex justify-center">
             <div className="w-16 h-16 bg-gradient-to-r from-primary to-accent rounded-2xl flex items-center justify-center shadow-travel">
               <Plane className="w-8 h-8 text-white" />
             </div>
           </div>
-          
           <div>
             <CardTitle className="text-2xl font-bold hero-text">Welcome Back</CardTitle>
             <CardDescription className="text-muted-foreground mt-2">
@@ -39,7 +55,8 @@ const Login = () => {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email */}
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">Email</Label>
               <div className="relative">
@@ -56,7 +73,6 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Password */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">Password</Label>
               <div className="relative">
@@ -86,22 +102,16 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Forgot Password */}
             <div className="flex justify-end">
-              <Link 
-                to="/forgot-password" 
-                className="text-sm text-primary hover:underline font-medium"
-              >
+              <Link to="/forgot-password" className="text-sm text-primary hover:underline font-medium">
                 Forgot password?
               </Link>
             </div>
 
-            {/* Login Button */}
-            <Button type="submit" variant="hero" size="lg" className="w-full">
-              Sign In
+            <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
 
-            {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border/50" />
@@ -111,14 +121,14 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Register Link */}
+            <Button type="button" variant="outline" size="lg" className="w-full bg-white/70" onClick={handleGoogleAuth}>
+              Continue with Google
+            </Button>
+
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
                 Don't have an account?{" "}
-                <Link 
-                  to="/register" 
-                  className="text-primary hover:underline font-medium"
-                >
+                <Link to="/register" className="text-primary hover:underline font-medium">
                   Sign up for free
                 </Link>
               </p>
