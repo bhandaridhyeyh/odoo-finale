@@ -1,4 +1,5 @@
 import * as tripService from "../services/trip.service.js";
+import { Trip } from "../models/Trip.model.js";
 
 export const createTrip = async (req, res) => {
   try {
@@ -15,6 +16,28 @@ export const getTrips = async (req, res) => {
     res.json(trips);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+export const getMyTrips = async (req, res) => {
+  try {
+    const trips = await Trip.find({ user: req.user._id })
+      .sort({ createdAt: -1 });
+    res.json(trips);
+  } catch (err) {
+    console.error("Error fetching user's trips:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getPublicTrips = async (req, res) => {
+  try {
+    const trips = await Trip.find({ isPublic: true })
+      .populate("user", "firstName lastName avatarUrl isVerified"); // Add fields you want
+    res.json(trips);
+  } catch (err) {
+    console.error("Error fetching public trips:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 

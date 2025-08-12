@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { Search, Filter, Heart, BookOpen, Users, MapPin, Calendar, Star, Eye } from "lucide-react";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import { Search, Filter, Heart, BookOpen, Users, MapPin, Star, Eye } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,188 +13,119 @@ const Community = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("popular");
   const [filterBy, setFilterBy] = useState("all");
+  const [trips, setTrips] = useState([]);
 
-  const communityTrips = [
+  // Static fallback data
+  const fallbackTrips = [
     {
       id: "1",
       title: "Solo Backpacking Through Southeast Asia",
-      author: {
-        name: "Sarah Chen",
-        avatar: "SC",
-        verified: true,
-      },
+      author: { name: "Sarah Chen", avatar: "SC", verified: true },
       destination: "Thailand, Vietnam, Cambodia",
       duration: "30 days",
       budget: "₹1200",
       image: "/src/assets/hero-beach.jpg",
-      description: "An incredible solo journey through Southeast Asia on a budget. Discovered hidden gems, amazing street food, and met wonderful people along the way.",
-      highlights: ["Budget Travel", "Solo Travel", "Street Food", "Cultural Immersion"],
-      stats: {
-        likes: 342,
-        views: 1280,
-        saves: 89,
-      },
-      rating: 4.8,
+      description:
+        "An incredible solo journey through Southeast Asia on a budget. Discovered hidden gems, amazing street food, and met wonderful people along the way.",
       tags: ["Budget", "Solo", "Adventure", "Culture"],
-      publishDate: "2 weeks ago",
+      stats: { likes: 342, views: 1280 },
+      rating: 4.8,
+      publishDate: "2024-07-15", // now in date format
+      isPublic: true,
     },
     {
-      id: "2", 
-      title: "Romantic European Honeymoon",
-      author: {
-        name: "Mark & Emma Wilson",
-        avatar: "MW",
-        verified: false,
-      },
-      destination: "Paris, Venice, Santorini",
-      duration: "14 days",
-      budget: "₹4500",
-      image: "/src/assets/destination-city.jpg",
-      description: "Our perfect honeymoon itinerary covering the most romantic cities in Europe. Every moment was magical!",
-      highlights: ["Romantic", "Luxury", "Photography", "Fine Dining"],
-      stats: {
-        likes: 567,
-        views: 2340,
-        saves: 156,
-      },
-      rating: 4.9,
-      tags: ["Romance", "Luxury", "Couples", "Europe"],
-      publishDate: "1 month ago",
-    },
-    {
-      id: "3",
+      id: "2",
       title: "Family Adventure in Swiss Alps",
-      author: {
-        name: "The Johnson Family", 
-        avatar: "JF",
-        verified: true,
-      },
+      author: { name: "The Johnson Family", avatar: "JF", verified: true },
       destination: "Interlaken, Zermatt, Lucerne",
-      duration: "10 days", 
+      duration: "10 days",
       budget: "₹6800",
       image: "/src/assets/destination-mountains.jpg",
-      description: "An unforgettable family trip to Switzerland with kids. Perfect mix of adventure and relaxation in the stunning Alps.",
-      highlights: ["Family Friendly", "Adventure", "Nature", "Scenic Views"],
-      stats: {
-        likes: 234,
-        views: 890,
-        saves: 67,
-      },
-      rating: 4.7,
+      description:
+        "An unforgettable family trip to Switzerland with kids. Perfect mix of adventure and relaxation in the stunning Alps.",
       tags: ["Family", "Adventure", "Nature", "Mountains"],
-      publishDate: "3 weeks ago",
-    },
-    {
-      id: "4",
-      title: "Digital Nomad Life in Bali",
-      author: {
-        name: "Alex Rivera",
-        avatar: "AR", 
-        verified: true,
-      },
-      destination: "Ubud, Canggu, Seminyak",
-      duration: "90 days",
-      budget: "₹2100", 
-      image: "/src/assets/hero-beach.jpg",
-      description: "3 months working remotely from Bali. Amazing coworking spaces, beautiful beaches, and incredible local culture.",
-      highlights: ["Remote Work", "Long Stay", "Coworking", "Beach Life"],
-      stats: {
-        likes: 445,
-        views: 1567,
-        saves: 123,
-      },
-      rating: 4.6,
-      tags: ["Digital Nomad", "Remote Work", "Long Stay", "Beach"],
-      publishDate: "1 week ago",
-    },
-    {
-      id: "5",
-      title: "Culinary Tour of Japan",
-      author: {
-        name: "Chef Marie Dubois",
-        avatar: "MD",
-        verified: true,
-      },
-      destination: "Tokyo, Kyoto, Osaka",
-      duration: "12 days",
-      budget: "₹3200",
-      image: "/src/assets/destination-city.jpg", 
-      description: "A foodie's paradise! From street food to Michelin stars, this trip covered the best of Japanese cuisine.",
-      highlights: ["Food Tourism", "Cultural Experience", "Markets", "Cooking Classes"],
-      stats: {
-        likes: 678,
-        views: 2890,
-        saves: 234,
-      },
-      rating: 4.9,
-      tags: ["Food", "Culture", "Cooking", "Japan"],
-      publishDate: "2 months ago",
-    },
-    {
-      id: "6",
-      title: "Budget Backpacking Europe",
-      author: {
-        name: "College Squad",
-        avatar: "CS",
-        verified: false,
-      },
-      destination: "Berlin, Prague, Budapest",
-      duration: "21 days",
-      budget: "₹800",
-      image: "/src/assets/destination-city.jpg",
-      description: "Ultimate budget guide for college students wanting to explore Eastern Europe. Hostels, cheap eats, and free activities!",
-      highlights: ["Ultra Budget", "Student Travel", "Hostels", "Free Activities"],
-      stats: {
-        likes: 123,
-        views: 567,
-        saves: 45,
-      },
-      rating: 4.4,
-      tags: ["Budget", "Student", "Backpacking", "Europe"],
-      publishDate: "1 month ago",
+      stats: { likes: 234, views: 890 },
+      rating: 4.7,
+      publishDate: "2024-06-25",
+      isPublic: true,
     },
   ];
 
+  useEffect(() => {
+    const fetchPublicTrips = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/trips/public");
+        // Only show public trips
+        setTrips(res.data.filter((trip) => trip.isPublic));
+      } catch (err) {
+        console.error("Error fetching community trips:", err);
+        // Fallback: only show public fallback trips
+        setTrips(fallbackTrips.filter((trip) => trip.isPublic !== false));
+      }
+    };
+    fetchPublicTrips();
+  }, []);
+
+  const mapTrip = (trip) => ({
+    ...trip,
+    author: trip.user
+      ? {
+        name: `${trip.user.firstName ?? ""} ${trip.user.lastName ?? ""}`.trim() || "Unknown",
+        avatar: trip.user.avatarUrl
+          ? trip.user.avatarUrl
+          : (trip.user.firstName?.[0] ?? "") + (trip.user.lastName?.[0] ?? ""),
+        verified: trip.user.isVerified ?? false,
+      }
+      : { name: "Unknown", avatar: "?", verified: false },
+  });
+
   const getFilteredTrips = () => {
-    let filtered = communityTrips;
-    
+    let filtered = trips.length ? trips : fallbackTrips;
+    filtered = filtered.map(mapTrip);
+
     if (searchQuery) {
-      filtered = filtered.filter(trip =>
-        trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        trip.destination.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        trip.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        trip.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      filtered = filtered.filter(
+        (trip) =>
+          trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          trip.destination.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          trip.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          trip.tags.some((tag) =>
+            tag.toLowerCase().includes(searchQuery.toLowerCase())
+          )
       );
     }
-    
-    // Sort trips
+
+    // Sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'popular':
+        case "popular":
           return b.stats.likes - a.stats.likes;
-        case 'recent':
-          return a.publishDate.localeCompare(b.publishDate);
-        case 'rating':
+        case "recent":
+          return new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime();
+        case "rating":
           return b.rating - a.rating;
-        case 'budget':
-          return parseInt(a.budget.replace(/[^0-9]/g, '')) - parseInt(b.budget.replace(/[^0-9]/g, ''));
+        case "budget":
+          return (
+            parseInt(a.budget.replace(/[^0-9]/g, "")) -
+            parseInt(b.budget.replace(/[^0-9]/g, ""))
+          );
         default:
           return 0;
       }
     });
-    
+
     return filtered;
   };
 
-  const handleLike = (id: string) => {
+  const handleLike = (id) => {
     console.log(`Liked trip: ${id}`);
   };
 
-  const handleSave = (id: string) => {
+  const handleSave = (id) => {
     console.log(`Saved trip: ${id}`);
   };
 
-  const handleViewTrip = (id: string) => {
+  const handleViewTrip = (id) => {
     console.log(`View trip details: ${id}`);
   };
 
@@ -213,49 +145,47 @@ const Community = () => {
 
           {/* Search and Filters */}
           <Card className="mb-8">
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <Input
-                    placeholder="Search trips, destinations, or tags..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                
-                <div className="flex gap-3">
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="popular">Most Popular</SelectItem>
-                      <SelectItem value="recent">Most Recent</SelectItem>
-                      <SelectItem value="rating">Highest Rated</SelectItem>
-                      <SelectItem value="budget">Budget (Low to High)</SelectItem>
-                    </SelectContent>
-                  </Select>
+            <CardContent className="p-6 flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search trips, destinations, or tags..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
 
-                  <Select value={filterBy} onValueChange={setFilterBy}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Trips</SelectItem>
-                      <SelectItem value="budget">Budget Travel</SelectItem>
-                      <SelectItem value="luxury">Luxury Travel</SelectItem>
-                      <SelectItem value="family">Family Friendly</SelectItem>
-                      <SelectItem value="solo">Solo Travel</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="flex gap-3">
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="popular">Most Popular</SelectItem>
+                    <SelectItem value="recent">Most Recent</SelectItem>
+                    <SelectItem value="rating">Highest Rated</SelectItem>
+                    <SelectItem value="budget">Budget (Low to High)</SelectItem>
+                  </SelectContent>
+                </Select>
 
-                  <Button variant="outline">
-                    <Filter className="w-4 h-4 mr-2" />
-                    More Filters
-                  </Button>
-                </div>
+                <Select value={filterBy} onValueChange={setFilterBy}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Trips</SelectItem>
+                    <SelectItem value="budget">Budget Travel</SelectItem>
+                    <SelectItem value="luxury">Luxury Travel</SelectItem>
+                    <SelectItem value="family">Family Friendly</SelectItem>
+                    <SelectItem value="solo">Solo Travel</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button variant="outline">
+                  <Filter className="w-4 h-4 mr-2" />
+                  More Filters
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -263,48 +193,52 @@ const Community = () => {
           {/* Results */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {getFilteredTrips().map((trip) => (
-              <Card key={trip.id} className="group overflow-hidden border-0 shadow-travel hover:shadow-travel-strong transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+              <Card key={trip.id || trip._id} className="group overflow-hidden border-0 shadow-travel hover:shadow-travel-strong transition-all duration-300 hover:-translate-y-1 cursor-pointer">
                 <div className="relative overflow-hidden">
                   <img
-                    src={trip.image}
+                    src={trip.image || "/src/assets/hero-beach.jpg"}
                     alt={trip.title}
                     className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
                     onClick={() => handleViewTrip(trip.id)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                  
-                  {/* Author info overlay */}
-                  <div className="absolute top-3 left-3">
-                    <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full pl-1 pr-3 py-1">
-                      <Avatar className="w-6 h-6">
+
+                  {/* Author info */}
+                  <div className="absolute top-3 left-3 flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full pl-1 pr-3 py-1">
+                    <Avatar className="w-6 h-6">
+                      {trip.author?.avatar && trip.author?.avatar.startsWith("http") ? (
+                        <img
+                          src={trip.author.avatar}
+                          alt={trip.author.name}
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                      ) : (
                         <AvatarFallback className="text-xs bg-gradient-to-r from-primary to-accent text-white">
-                          {trip.author.avatar}
+                          {trip.author?.avatar ?? "?"}
                         </AvatarFallback>
-                      </Avatar>
-                      <span className="text-white text-sm font-medium">{trip.author.name}</span>
-                      {trip.author.verified && (
-                        <span className="text-white text-xs">✓</span>
                       )}
-                    </div>
+                    </Avatar>
+                    <span className="text-white text-sm font-medium">
+                      {trip.author?.name ?? "Unknown"}
+                    </span>
+                    {trip.author?.verified && <span className="text-white text-xs">✓</span>}
                   </div>
 
-                  {/* Trip title overlay */}
+                  {/* Title */}
                   <div className="absolute bottom-3 left-3 right-3 text-white">
                     <h3 className="font-semibold text-lg mb-1 line-clamp-2">{trip.title}</h3>
                     <div className="flex items-center gap-1 text-sm opacity-90">
                       <MapPin className="w-3 h-3" />
-                      <span className="line-clamp-1">{trip.destination}</span>
+                      <span className="line-clamp-1">{trip.description}</span>
                     </div>
                   </div>
                 </div>
 
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-warning text-warning" />
-                        <span className="font-medium">{trip.rating}</span>
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-warning text-warning" />
+                      <span className="font-medium">{trip.rating}</span>
                     </div>
                     <div className="text-right">
                       <div className="font-semibold text-primary">{trip.budget}</div>
@@ -316,61 +250,49 @@ const Community = () => {
                     {trip.description}
                   </p>
 
-                  {/* Tags */}
                   <div className="flex flex-wrap gap-1 mb-3">
-                    {trip.tags.slice(0, 3).map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
+                    {(trip.tags ?? []).slice(0, 3).map((tag, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
                         {tag}
                       </Badge>
                     ))}
-                    {trip.tags.length > 3 && (
+                    {(trip.tags ?? []).length > 3 && (
                       <Badge variant="outline" className="text-xs">
-                        +{trip.tags.length - 3}
+                        +{(trip.tags ?? []).length - 3}
                       </Badge>
                     )}
                   </div>
 
-                  {/* Stats */}
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1">
                         <Heart className="w-3 h-3" />
-                        <span>{trip.stats.likes}</span>
+                        <span>{trip.stats?.likes ?? 0}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Eye className="w-3 h-3" />
-                        <span>{trip.stats.views}</span>
+                        <span>{trip.stats?.views ?? 0}</span>
                       </div>
                     </div>
-                    <span>{trip.publishDate}</span>
+                    <span>
+                      {trip.startDate && trip.endDate
+                        ? `${new Date(trip.startDate).toLocaleDateString()} - ${new Date(trip.endDate).toLocaleDateString()}`
+                        : trip.startDate
+                          ? new Date(trip.startDate).toLocaleDateString()
+                          : trip.endDate
+                            ? new Date(trip.endDate).toLocaleDateString()
+                            : "No dates"}
+                    </span>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="flex gap-2 mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleLike(trip.id)}
-                    >
-                      <Heart className="w-3 h-3 mr-1" />
-                      Like
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => handleLike(trip.id)}>
+                      <Heart className="w-3 h-3 mr-1" /> Like
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleSave(trip.id)}
-                    >
-                      <BookOpen className="w-3 h-3 mr-1" />
-                      Save
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => handleSave(trip.id)}>
+                      <BookOpen className="w-3 h-3 mr-1" /> Save
                     </Button>
-                    <Button
-                      variant="hero"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleViewTrip(trip.id)}
-                    >
+                    <Button variant="hero" size="sm" className="flex-1" onClick={() => handleViewTrip(trip.id)}>
                       View Trip
                     </Button>
                   </div>
@@ -379,7 +301,6 @@ const Community = () => {
             ))}
           </div>
 
-          {/* Empty State */}
           {getFilteredTrips().length === 0 && (
             <div className="text-center py-16">
               <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />

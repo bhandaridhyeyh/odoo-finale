@@ -57,11 +57,6 @@ const TripCard = ({
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
         
-        {/* Status badge */}
-        <div className={`absolute top-3 right-3 px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(status)}`}>
-          {getStatusLabel(status)}
-        </div>
-
         {/* Trip info overlay */}
         <div className="absolute bottom-3 left-3 text-white">
           <h3 className="font-semibold text-lg mb-1">{title}</h3>

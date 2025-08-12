@@ -24,15 +24,16 @@ interface ProfileData {
 }
 
 interface Trip {
-  id: string;
+  _id: string;
   title: string;
-  destination: string;
-  image: string;
-  duration: string;
-  travelers: number;
-  cost: number;
-  status: "completed" | "ongoing";
-  collaborators: string[];
+  description: string;
+  image?: string;
+  duration?: string;
+  travelers?: number;
+  cost?: number;
+  status?: "completed" | "ongoing";
+  collaborators?: string[];
+  isPublic?: boolean;
 }
 
 interface Achievement {
@@ -50,33 +51,33 @@ const Profile = () => {
 
   // Fetch user data
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileAndTrips = async () => {
       try {
         const token = localStorage.getItem("token");
-        if (!token) {
-          console.error("No token found, cannot fetch profile.");
-          return;
-        }
+        if (!token) return;
 
-        const res = await axios.get("http://localhost:5000/api/users/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        // Fetch profile
+        const profileRes = await axios.get("http://localhost:5000/api/users/me", {
+          headers: { Authorization: `Bearer ${token}` },
         });
+        setProfile(profileRes.data);
 
-        setProfile(res.data);
+        // Fetch all trips of this user (public + private)
+        const tripsRes = await axios.get("http://localhost:5000/api/trips/my-trips", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUserTrips(tripsRes.data); // assume data is array of trips
 
-        // Backend currently doesn't send trips/achievements, so set empty arrays for now
-        setUserTrips([]);
+        // Set achievements as needed or leave empty
         setAchievements([]);
       } catch (err) {
-        console.error("Failed to fetch profile:", err);
+        console.error("Failed to fetch profile or trips:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfile();
+    fetchProfileAndTrips();
   }, []);
 
   const handleSave = async () => {
@@ -117,7 +118,7 @@ const Profile = () => {
 
   const isProfileComplete = profile && profile.firstName && profile.lastName && profile.email;
 
-   const fullName = profile ? `${profile.firstName} ${profile.lastName}` : "";
+  const fullName = profile ? `${profile.firstName} ${profile.lastName}` : "";
 
   return (
     <Layout>
@@ -137,9 +138,9 @@ const Profile = () => {
                         <AvatarFallback className="text-2xl bg-gradient-to-r from-primary to-accent text-white">
                           {fullName
                             ? fullName
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
                             : "?"}
                         </AvatarFallback>
                       )}
@@ -164,7 +165,7 @@ const Profile = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <h1 className="text-3xl font-bold text-foreground mb-2">{fullName}</h1>
-                      
+
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
@@ -251,40 +252,25 @@ const Profile = () => {
 
           {/* Tabs */}
           <Tabs defaultValue="trips" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="trips">My Trips</TabsTrigger>
-              <TabsTrigger value="achievements">Achievements</TabsTrigger>
-            </TabsList>
-
             <TabsContent value="trips" className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-foreground">Previous Trips</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {userTrips.map((trip) => (
-                  <TripCard key={trip.id} {...trip} onClick={handleTripClick} />
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="achievements" className="space-y-6">
-              <div className="flex items-center gap-2 mb-6">
-                <Award className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl font-bold text-foreground">Travel Achievements</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {achievements.map((a, index) => (
-                  <Card key={index}>
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-4">
-                        <div className="text-3xl">{a.icon}</div>
-                        <div>
-                          <h3 className="font-semibold text-foreground">{a.name}</h3>
-                          <p className="text-sm text-muted-foreground">{a.description}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <TripCard
+                    key={trip._id}
+                    id={trip._id}
+                    title={trip.title}
+                    destination={trip.description}
+                    image={trip.image || "/src/assets/hero-beach.jpg"}
+                    duration={trip.duration || ""}
+                    travelers={trip.travelers ?? 1}
+                    cost={trip.cost ?? 0}
+                    status={trip.status || "completed"}
+                    collaborators={trip.collaborators || []}
+                    onClick={handleTripClick}
+                  />
                 ))}
               </div>
             </TabsContent>

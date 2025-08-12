@@ -24,7 +24,7 @@ const Trips = () => {
     id: trip._id,
     title: trip.title,
     destination: trip.description || "",
-    image: trip.image || "/placeholder.svg",
+    image: trip.image || "/src/assets/hero-beach.jpg",
     duration: `${Math.ceil((new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime()) / (1000*60*60*24))} days`,
     travelers: (trip.collaborators?.length || 0) + 1,
     cost: trip.budget || 0,
