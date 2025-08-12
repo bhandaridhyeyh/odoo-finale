@@ -1,6 +1,7 @@
 // src/app.js
 import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import cors from "cors";
@@ -14,8 +15,6 @@ import documentRoutes from "./routes/documents.routes.js";
 import userRoutes from "./routes/users.routes.js";
 import searchRoutes from "./routes/search.js";
 import connectDB from "./db/mongoose.js";
-
-dotenv.config();
 
 const app = express();
 app.use(helmet());
@@ -35,8 +34,8 @@ app.use(passport.initialize());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/trips", tripRoutes);
-app.use("/api/stops", stopRoutes);        // note: our stops.routes uses /:tripId and /stop/:id
-app.use("/api/activities", activityRoutes); // activities.routes uses /:stopId and /activity/:id
+app.use("/api/stops", stopRoutes);
+app.use("/api/activities", activityRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/search", searchRoutes);

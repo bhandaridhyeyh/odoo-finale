@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import {
   Search as SearchIcon,
@@ -37,6 +38,10 @@ const Search = () => {
   });
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const { search } = useLocation();
+  const params = new URLSearchParams(search);
+  const query = params.get("query");
 
   const fetchResults = async (type?: string) => {
     if (!searchQuery.trim()) return;

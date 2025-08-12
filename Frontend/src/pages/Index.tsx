@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Plus, ArrowRight, Compass, Users, Calendar, Star } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,11 @@ const Index = () => {
   const [likedDestinations, setLikedDestinations] = useState<string[]>([]);
   const [userTrips, setUserTrips] = useState<any[]>([]);
   const { user } = useContext(AuthContext);
+
+  const navigate = useNavigate();
+  const handleSearch = (query: string) => {
+    navigate(`/discover?query=${encodeURIComponent(query)}`);
+  };
 
   useEffect(() => {
     if (!user) return;

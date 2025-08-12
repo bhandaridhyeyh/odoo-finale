@@ -1,6 +1,7 @@
 // src/config/passport.js
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import User from "../models/User.model.js";
 
 export default function setupPassport() {
@@ -13,6 +14,14 @@ export default function setupPassport() {
       done(err, null);
     }
   });
+
+  passport.use(new JwtStrategy({
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: process.env.JWT_ACCESS_SECRET,
+  }, async (payload, done) => {
+    const user = await User.findById(payload.id);
+    return user ? done(null, user) : done(null, false);
+  }));
 
   passport.use(
     new GoogleStrategy(

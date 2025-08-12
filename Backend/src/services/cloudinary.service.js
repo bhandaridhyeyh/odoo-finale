@@ -1,7 +1,15 @@
 // src/services/cloudinary.service.js
+import dotenv from "dotenv";
+dotenv.config(); // ✅ Ensure env variables are loaded before anything else
+
 import { v2 as cloudinary } from "cloudinary";
 import multer from "multer";
 import streamifier from "streamifier";
+
+if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+  console.error("❌ Missing Cloudinary environment variables!");
+  throw new Error("Cloudinary configuration missing from environment variables.");
+}
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -12,16 +20,23 @@ cloudinary.config({
 const storage = multer.memoryStorage();
 export const uploadMiddleware = multer({ storage });
 
-export const uploadBufferToCloudinary = (buffer, folder = "trip_docs", filename = undefined) => {
+export const uploadBufferToCloudinary = (buffer, folder = "trip_docs", filename) => {
   return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder, resource_type: "auto", public_id: filename ? filename.replace(/\.[^/.]+$/, "") : undefined },
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: "auto",
+        public_id: filename ? filename.replace(/\.[^/.]+$/, "") : undefined,
+      },
       (error, result) => {
-        if (error) return reject(error);
+        if (error) {
+          console.error("❌ Cloudinary upload failed:", error);
+          return reject(error);
+        }
         resolve(result);
       }
     );
-    streamifier.createReadStream(buffer).pipe(stream);
+    streamifier.createReadStream(buffer).pipe(uploadStream);
   });
 };
 

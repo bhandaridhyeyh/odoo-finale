@@ -6,14 +6,14 @@ const secure = process.env.SMTP_SECURE === "true" || port === 465;
 
 const transporter = process.env.SMTP_HOST
   ? nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port,
-      secure, // true for 465, false for 587/STARTTLS
-      auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      } : undefined,
-    })
+    host: process.env.SMTP_HOST,
+    port,
+    secure, // true for 465, false for 587/STARTTLS
+    auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    } : undefined,
+  })
   : nodemailer.createTransport({ jsonTransport: true }); // dev fallback: logs emails instead of sending
 
 const sendMail = async ({ to, subject, html, text }) => {
@@ -42,4 +42,14 @@ const sendEmailOtp = async (to, name, otp, minutesValid = 10) => {
   await sendMail({ to, subject, html, text: `Your verification code is ${otp}. It expires in ${minutesValid} minutes.` });
 };
 
-export default { sendMail, sendEmailVerification, sendEmailOtp };
+const sendInviteEmail = async (to, token, tripId) => {
+  const link = `${process.env.FRONTEND_URL}/accept-invite?tripId=${tripId}&token=${token}`;
+  // ...nodemailer code...
+  await transporter.sendMail({
+    to,
+    subject: "Trip Collaboration Invite",
+    html: `<p>You've been invited! <a href="${link}">Click here to join</a></p>`,
+  });
+};
+
+export default { sendMail, sendEmailVerification, sendEmailOtp, sendInviteEmail };

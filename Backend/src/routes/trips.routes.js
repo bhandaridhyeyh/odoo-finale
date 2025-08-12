@@ -11,6 +11,8 @@ import {
   uploadCover,
   addCollaborator,
   removeCollaborator,
+  inviteCollaborator,
+  acceptInvite
 } from "../controllers/trips.controller.js";
 import { uploadMiddleware } from "../services/cloudinary.service.js";
 
@@ -31,6 +33,8 @@ router.route("/:id")
 router.post("/:id/cover", protect, uploadMiddleware.single("file"), uploadCover);
 router.post("/:id/collaborators", protect, addCollaborator);
 router.delete("/:id/collaborators", protect, removeCollaborator);
+router.post("/:id/invite", protect, inviteCollaborator);
+router.get("/:tripId/accept-invite", protect, acceptInvite);
 
 
 export default router;
